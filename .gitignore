@@ -1,0 +1,33 @@
+node_modules/
+client/dist/
+server/data/*.db
+*.log
+
+# Local database artifacts
+*.db
+*.sqlite
+
+# Prevent uploading database and binary artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.db3
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.tiff
+*.pdf
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
