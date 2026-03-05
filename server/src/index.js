@@ -38,6 +38,66 @@ app.get('/api/dashboard', async (_req, res) => {
   }
 });
 
+app.get('/api/insights', async (_req, res) => {
+  try {
+    const [overspeedByMonth, fuelEfficiencyByMonth, avgEngineTempByMonth, distanceByMonth, tripStatusByMonth, alertByVehicle] =
+      await Promise.all([
+        all(`
+          SELECT strftime('%Y-%m', reading_time) AS month, SUM(CASE WHEN overspeed_events > 0 THEN 1 ELSE 0 END) AS vehicles_crossed
+          FROM vehicle_conditions
+          GROUP BY month
+          ORDER BY month
+        `),
+        all(`
+          SELECT strftime('%Y-%m', t.trip_date) AS month, v.registration_no, ROUND(SUM(t.distance_km) / NULLIF(SUM(t.fuel_consumed_l), 0), 2) AS kmpl
+          FROM travel_logs t
+          JOIN vehicles v ON v.id = t.vehicle_id
+          GROUP BY month, v.registration_no
+          ORDER BY month, kmpl DESC
+        `),
+        all(`
+          SELECT strftime('%Y-%m', reading_time) AS month, ROUND(AVG(engine_temp_c), 2) AS avg_engine_temp
+          FROM vehicle_conditions
+          GROUP BY month
+          ORDER BY month
+        `),
+        all(`
+          SELECT strftime('%Y-%m', trip_date) AS month, ROUND(SUM(distance_km), 2) AS total_distance
+          FROM travel_logs
+          GROUP BY month
+          ORDER BY month
+        `),
+        all(`
+          SELECT strftime('%Y-%m', trip_date) AS month,
+            SUM(CASE WHEN status = 'Delivered' THEN 1 ELSE 0 END) AS delivered,
+            SUM(CASE WHEN status = 'Delayed' THEN 1 ELSE 0 END) AS delayed
+          FROM freight_details
+          GROUP BY month
+          ORDER BY month
+        `),
+        all(`
+          SELECT v.registration_no,
+            SUM(CASE WHEN c.engine_temp_c > 100 OR c.overspeed_events >= 4 OR c.tyre_pressure_psi < 92 THEN 1 ELSE 0 END) AS alerts
+          FROM vehicle_conditions c
+          JOIN vehicles v ON v.id = c.vehicle_id
+          GROUP BY v.registration_no
+          ORDER BY alerts DESC
+        `)
+      ]);
+
+    res.json({
+      overspeedByMonth,
+      fuelEfficiencyByMonth,
+      avgEngineTempByMonth,
+      distanceByMonth,
+      tripStatusByMonth,
+      alertByVehicle
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/vehicles', async (_req, res) => {
   res.json(await all('SELECT * FROM vehicles ORDER BY id'));
 });
