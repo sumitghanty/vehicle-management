@@ -1,0 +1,74 @@
+:root {
+  font-family: Arial, sans-serif;
+  color: #1f2937;
+}
+body {
+  margin: 0;
+  background: #f3f4f6;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #111827;
+  color: #f9fafb;
+  padding: 1rem;
+}
+.navlink {
+  display: block;
+  text-decoration: none;
+  color: #e5e7eb;
+  padding: 0.55rem;
+  border-radius: 6px;
+  margin: 0.4rem 0;
+}
+.navlink.active,
+.navlink:hover {
+  background: #2563eb;
+}
+.content {
+  padding: 1.5rem;
+}
+.panel {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.45rem;
+  font-size: 0.88rem;
+}
+.kpi-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.kpi {
+  background: #dbeafe;
+  border-radius: 8px;
+  padding: 0.8rem;
+}
+.kpi strong {
+  font-size: 1.2rem;
+}
+.btn {
+  background: #2563eb;
+  color: white;
+  border: 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
