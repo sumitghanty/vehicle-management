@@ -72,3 +72,52 @@ td {
   border-radius: 5px;
   cursor: pointer;
 }
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.chart-card h3 {
+  margin-top: 0;
+  font-size: 1rem;
+}
+.chart-card.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.chart-card.clickable:hover {
+  transform: translateY(-2px);
+}
+.chart-bars {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  min-height: 160px;
+}
+.chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.chart-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: #2563eb;
+  min-height: 6px;
+}
+.chart-col small {
+  font-size: 0.7rem;
+  margin-top: 0.3rem;
+}
+.chart-col span {
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+.bar-red { background: #dc2626; }
+.bar-green { background: #16a34a; }
+.bar-orange { background: #ea580c; }
+.bar-blue { background: #2563eb; }
+.bar-purple { background: #7c3aed; }
