@@ -3,11 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { request } from '../api.js';
 
-function ChartCard({ title, subtitle, points, valueKey, colorClass = '', onClick }) {
+function ChartCard({ title, subtitle, points, valueKey, labelKey = 'month', colorClass = '', onPointClick }) {
   const maxValue = useMemo(() => Math.max(...points.map((point) => Number(point[valueKey]) || 0), 1), [points, valueKey]);
 
   return (
-    <article className={`panel chart-card ${onClick ? 'clickable' : ''}`} onClick={onClick}>
+    <article className="panel chart-card">
       <div className="chart-head">
         <h3>{title}</h3>
         <p>{subtitle}</p>
@@ -16,12 +16,13 @@ function ChartCard({ title, subtitle, points, valueKey, colorClass = '', onClick
         {points.map((point) => {
           const value = Number(point[valueKey]) || 0;
           const height = Math.max((value / maxValue) * 100, 6);
+          const label = point[labelKey];
           return (
-            <div className="chart-col" key={`${point.month}-${point.registration_no ?? title}`}>
-              <div className={`chart-bar ${colorClass}`} style={{ height: `${height}%` }} title={`${point.month}: ${value}`} />
-              <small>{point.month?.slice(2) ?? point.registration_no}</small>
+            <button className="chart-col chart-bar-btn" key={`${label}-${title}`} onClick={() => onPointClick?.(point)}>
+              <div className={`chart-bar ${colorClass}`} style={{ height: `${height}%` }} title={`${label}: ${value}`} />
+              <small>{String(label).slice(2)}</small>
               <span>{value}</span>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -64,8 +65,8 @@ export default function DashboardPage() {
     <div>
       <section className="hero panel">
         <h1>Vehicle Condition Management Dashboard</h1>
-        <p>Monthly analytics for travel, overspeeding, fuel efficiency and route-level performance insights.</p>
-        <span className="hero-chip">Click any chart to open detail pages</span>
+        <p>Click a specific bar in any chart to navigate to detail page with filtered records.</p>
+        <span className="hero-chip">Interactive drill-down enabled</span>
       </section>
 
       <div className="kpi-grid">
@@ -80,56 +81,67 @@ export default function DashboardPage() {
       <div className="chart-grid">
         <ChartCard
           title="Overspeed Vehicles"
-          subtitle="Month-wise vehicles crossing overspeed limit"
+          subtitle="Click month bar to view overspeed records"
           points={insights.overspeedByMonth}
           valueKey="vehicles_crossed"
           colorClass="bar-red"
-          onClick={() => navigate('/conditions')}
+          onPointClick={(point) => navigate(`/conditions?month=${point.month}&filter=overspeed`)}
         />
 
         <ChartCard
           title="Fuel Efficient Vehicle"
-          subtitle="Best KM/L performer by month"
+          subtitle="Click month bar to inspect fuel logs"
           points={monthlyBestFuel}
           valueKey="kmpl"
           colorClass="bar-green"
-          onClick={() => navigate('/conditions')}
+          onPointClick={(point) => navigate(`/conditions?month=${point.month}&vehicle=${point.registration_no}`)}
         />
 
         <ChartCard
           title="Engine Temperature"
-          subtitle="Average monthly engine temperature"
+          subtitle="Click month bar to inspect high engine readings"
           points={insights.avgEngineTempByMonth}
           valueKey="avg_engine_temp"
           colorClass="bar-orange"
-          onClick={() => navigate('/conditions')}
+          onPointClick={(point) => navigate(`/conditions?month=${point.month}&filter=hotEngine`)}
         />
 
         <ChartCard
           title="Distance Covered"
-          subtitle="Total monthly running distance"
+          subtitle="Click month bar to inspect travel logs"
           points={insights.distanceByMonth}
           valueKey="total_distance"
           colorClass="bar-blue"
-          onClick={() => navigate('/conditions')}
+          onPointClick={(point) => navigate(`/conditions?month=${point.month}`)}
         />
 
         <ChartCard
           title="Delayed Trips"
-          subtitle="Freight delays by month"
+          subtitle="Click month bar to view delayed freight"
           points={insights.tripStatusByMonth}
           valueKey="delayed"
           colorClass="bar-purple"
-          onClick={() => navigate('/freight')}
+          onPointClick={(point) => navigate(`/freight?month=${point.month}&status=Delayed`)}
         />
 
         <ChartCard
           title="Alerts by Vehicle"
-          subtitle="Condition alerts count per vehicle"
-          points={insights.alertByVehicle.map((row) => ({ ...row, month: row.registration_no }))}
+          subtitle="Click vehicle bar to view alert-only condition logs"
+          points={insights.alertByVehicle.map((row) => ({ ...row, vehicle: row.registration_no }))}
+          labelKey="vehicle"
           valueKey="alerts"
           colorClass="bar-red"
-          onClick={() => navigate('/conditions')}
+          onPointClick={(point) => navigate(`/conditions?vehicle=${point.vehicle}&filter=alerts`)}
+        />
+
+        <ChartCard
+          title="Fuel Efficiency by Trip Point"
+          subtitle="Start / Mid / End efficiency measurement"
+          points={insights.fuelEfficiencyByPoint}
+          labelKey="point"
+          valueKey="avg_kmpl"
+          colorClass="bar-teal"
+          onPointClick={(point) => navigate(`/conditions?point=${point.point}`)}
         />
       </div>
 

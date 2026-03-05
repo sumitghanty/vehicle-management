@@ -112,7 +112,12 @@ async function setupSchema() {
     CREATE TABLE vehicle_conditions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vehicle_id INTEGER,
+      trip_date TEXT,
+      measurement_point TEXT,
       reading_time TEXT,
+      distance_covered_km REAL,
+      fuel_used_l REAL,
+      fuel_efficiency_kmpl REAL,
       tyre_pressure_psi REAL,
       fuel_level_percent REAL,
       engine_temp_c REAL,
@@ -149,10 +154,8 @@ async function seedMasterData() {
     [driver.name, driver.license_no, driver.phone, driver.experience_years, driver.address, driver.status]
   );
 
-  await run(
-    `INSERT INTO vehicle_driver_mapping(vehicle_id, driver_id, assigned_from, assigned_to, shift_type)
-     VALUES(1, 1, '2022-01-01', NULL, 'Day')`
-  );
+  await run(`INSERT INTO vehicle_driver_mapping(vehicle_id, driver_id, assigned_from, assigned_to, shift_type)
+     VALUES(1, 1, '2022-01-01', NULL, 'Day')`);
 }
 
 async function seedOperationalData() {
@@ -165,7 +168,7 @@ async function seedOperationalData() {
   const avgSpeed = Number(randomRange(42, 64).toFixed(2));
   const maxSpeed = Number((avgSpeed + randomRange(12, 30)).toFixed(2));
   const fuelUsed = Number((actualDistance / randomRange(3.2, 4.8)).toFixed(2));
-  const odometer = Number((122000 + actualDistance).toFixed(2));
+  const odometerStart = 122000;
 
   await run(
     `INSERT INTO freight_details(vehicle_id, driver_id, origin, destination, cargo_type, cargo_weight_ton,
@@ -191,22 +194,62 @@ async function seedOperationalData() {
     [1, tripDate, actualDistance, avgSpeed, maxSpeed, fuelUsed, origin, destination]
   );
 
-  await run(
-    `INSERT INTO vehicle_conditions(vehicle_id, reading_time, tyre_pressure_psi, fuel_level_percent,
-      engine_temp_c, overspeed_events, battery_voltage, coolant_level_percent, odometer_km)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      1,
-      `${tripDate}T08:00:00.000Z`,
-      Number(randomRange(88, 115).toFixed(2)),
-      Number(randomRange(20, 95).toFixed(2)),
-      Number(randomRange(78, 108).toFixed(2)),
-      Math.floor(randomRange(0, 6)),
-      Number(randomRange(11.8, 14.2).toFixed(2)),
-      Number(randomRange(55, 100).toFixed(2)),
-      odometer
-    ]
-  );
+  const measurementPoints = [
+    {
+      measurement_point: 'Start',
+      reading_time: `${tripDate}T08:00:00.000Z`,
+      distance_covered_km: 0,
+      fuel_used_l: 0,
+      fuel_level_percent: 96,
+      overspeed_events: 0,
+      odometer_km: odometerStart
+    },
+    {
+      measurement_point: 'Mid',
+      reading_time: `${tripDate}T12:30:00.000Z`,
+      distance_covered_km: Number((actualDistance / 2).toFixed(2)),
+      fuel_used_l: Number((fuelUsed / 2).toFixed(2)),
+      fuel_level_percent: 58,
+      overspeed_events: Math.floor(randomRange(0, 3)),
+      odometer_km: Number((odometerStart + actualDistance / 2).toFixed(2))
+    },
+    {
+      measurement_point: 'End',
+      reading_time: `${tripDate}T18:00:00.000Z`,
+      distance_covered_km: actualDistance,
+      fuel_used_l: fuelUsed,
+      fuel_level_percent: 28,
+      overspeed_events: Math.floor(randomRange(1, 6)),
+      odometer_km: Number((odometerStart + actualDistance).toFixed(2))
+    }
+  ];
+
+  for (const point of measurementPoints) {
+    const fuelEfficiency = point.fuel_used_l > 0 ? Number((point.distance_covered_km / point.fuel_used_l).toFixed(2)) : 0;
+
+    await run(
+      `INSERT INTO vehicle_conditions(
+        vehicle_id, trip_date, measurement_point, reading_time, distance_covered_km, fuel_used_l, fuel_efficiency_kmpl,
+        tyre_pressure_psi, fuel_level_percent, engine_temp_c, overspeed_events, battery_voltage, coolant_level_percent, odometer_km
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        1,
+        tripDate,
+        point.measurement_point,
+        point.reading_time,
+        point.distance_covered_km,
+        point.fuel_used_l,
+        fuelEfficiency,
+        Number(randomRange(88, 115).toFixed(2)),
+        point.fuel_level_percent,
+        Number(randomRange(78, 108).toFixed(2)),
+        point.overspeed_events,
+        Number(randomRange(11.8, 14.2).toFixed(2)),
+        Number(randomRange(55, 100).toFixed(2)),
+        point.odometer_km
+      ]
+    );
+  }
 }
 
 (async () => {
@@ -214,7 +257,7 @@ async function seedOperationalData() {
     await setupSchema();
     await seedMasterData();
     await seedOperationalData();
-    console.log('Database seeded successfully with one sample row per table.');
+    console.log('Database seeded successfully with trip stage measurements (Start/Mid/End).');
   } catch (error) {
     console.error(error);
     process.exitCode = 1;
