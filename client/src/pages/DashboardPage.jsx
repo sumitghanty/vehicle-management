@@ -3,12 +3,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { request } from '../api.js';
 
-function ChartCard({ title, points, valueKey, colorClass = '', onClick }) {
+function ChartCard({ title, subtitle, points, valueKey, colorClass = '', onClick }) {
   const maxValue = useMemo(() => Math.max(...points.map((point) => Number(point[valueKey]) || 0), 1), [points, valueKey]);
 
   return (
     <article className={`panel chart-card ${onClick ? 'clickable' : ''}`} onClick={onClick}>
-      <h3>{title}</h3>
+      <div className="chart-head">
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
       <div className="chart-bars">
         {points.map((point) => {
           const value = Number(point[valueKey]) || 0;
@@ -59,8 +62,11 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1>Vehicle Condition Management Dashboard</h1>
-      <p>Interactive insights for monthly travel, overspeeding, fuel efficiency and condition alerts.</p>
+      <section className="hero panel">
+        <h1>Vehicle Condition Management Dashboard</h1>
+        <p>Monthly analytics for travel, overspeeding, fuel efficiency and route-level performance insights.</p>
+        <span className="hero-chip">Click any chart to open detail pages</span>
+      </section>
 
       <div className="kpi-grid">
         {cards.map(([label, value]) => (
@@ -73,7 +79,8 @@ export default function DashboardPage() {
 
       <div className="chart-grid">
         <ChartCard
-          title="Overspeed Vehicles by Month (Red)"
+          title="Overspeed Vehicles"
+          subtitle="Month-wise vehicles crossing overspeed limit"
           points={insights.overspeedByMonth}
           valueKey="vehicles_crossed"
           colorClass="bar-red"
@@ -81,7 +88,8 @@ export default function DashboardPage() {
         />
 
         <ChartCard
-          title="Most Fuel Efficient Vehicle per Month"
+          title="Fuel Efficient Vehicle"
+          subtitle="Best KM/L performer by month"
           points={monthlyBestFuel}
           valueKey="kmpl"
           colorClass="bar-green"
@@ -89,7 +97,8 @@ export default function DashboardPage() {
         />
 
         <ChartCard
-          title="Average Engine Temperature by Month"
+          title="Engine Temperature"
+          subtitle="Average monthly engine temperature"
           points={insights.avgEngineTempByMonth}
           valueKey="avg_engine_temp"
           colorClass="bar-orange"
@@ -97,7 +106,8 @@ export default function DashboardPage() {
         />
 
         <ChartCard
-          title="Total Distance by Month"
+          title="Distance Covered"
+          subtitle="Total monthly running distance"
           points={insights.distanceByMonth}
           valueKey="total_distance"
           colorClass="bar-blue"
@@ -105,7 +115,8 @@ export default function DashboardPage() {
         />
 
         <ChartCard
-          title="Delayed Trips by Month"
+          title="Delayed Trips"
+          subtitle="Freight delays by month"
           points={insights.tripStatusByMonth}
           valueKey="delayed"
           colorClass="bar-purple"
@@ -114,6 +125,7 @@ export default function DashboardPage() {
 
         <ChartCard
           title="Alerts by Vehicle"
+          subtitle="Condition alerts count per vehicle"
           points={insights.alertByVehicle.map((row) => ({ ...row, month: row.registration_no }))}
           valueKey="alerts"
           colorClass="bar-red"
